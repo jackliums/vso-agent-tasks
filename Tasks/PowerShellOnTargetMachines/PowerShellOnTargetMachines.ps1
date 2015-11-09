@@ -27,6 +27,7 @@ Write-Verbose "runPowershellInParallel = $runPowershellInParallel" -Verbose
 Write-Verbose "sessionVariables = $sessionVariables" -Verbose
 
 . ./PowerShellJob.ps1
+. ./Telemetry.ps1
 
 import-module "Microsoft.TeamFoundation.DistributedTask.Task.Internal"
 import-module "Microsoft.TeamFoundation.DistributedTask.Task.Common"
@@ -71,19 +72,6 @@ function ThrowError
         throw "$errorMessage $helpMessage"
 }
 
-function Write-Telemetry
-{
-  [CmdletBinding()]
-  param(
-    [Parameter(Mandatory=$True,Position=1)]
-    [string]$code
-    )
-
-  $telemetryString = "##vso[task.logissue type=error;code=" + $code + ";TaskId=3B5693D4-5777-4FEE-862A-BD2B7A374C68;]"
-  Write-Host $telemetryString
-  $global:telemetrySet = $true
-}
-
 function Get-ResourceWinRmConfig
 {
     param
@@ -111,7 +99,7 @@ function Get-ResourceWinRmConfig
 
         if([string]::IsNullOrWhiteSpace($winrmPortToUse))
         {
-            Write-Telemetry "PREREQ001"
+            Write-Telemetry $telemetryCodes["PREREQ_NoWinRMHTTPSPort"]
             throw(Get-LocalizedString -Key "{0} port was not provided for resource '{1}'" -ArgumentList "WinRM HTTPS", $resourceName)
         }
     }
@@ -125,7 +113,7 @@ function Get-ResourceWinRmConfig
 
         if([string]::IsNullOrWhiteSpace($winrmPortToUse))
         {
-            Write-Telemetry "PREREQ001"
+            Write-Telemetry $telemetryCodes["PREREQ_NoWinRMHTTP_Port"]
             throw(Get-LocalizedString -Key "{0} port was not provided for resource '{1}'" -ArgumentList "WinRM HTTP", $resourceName)
         }
     }
@@ -148,7 +136,7 @@ function Get-ResourceWinRmConfig
 
                if ([string]::IsNullOrEmpty($winrmHttpPort))
                {
-                   Write-Telemetry "PREREQ001"
+                   Write-Telemetry $telemetryCodes["PREREQ_NoWinRMHTTP_Port"]
                    throw(Get-LocalizedString -Key "Resource: '{0}' does not have WinRM service configured. Configure WinRM service on the Azure VM Resources. Refer for more details '{1}'" -ArgumentList $resourceName, "http://aka.ms/azuresetup" )
                }
                else
@@ -183,7 +171,7 @@ function Get-ResourceWinRmConfig
 
                if ([string]::IsNullOrEmpty($winrmHttpsPort))
                {
-                   Write-Telemetry "PREREQ001"
+                   Write-Telemetry $telemetryCodes["PREREQ_NoWinRMHTTPSPort"]
                    throw(Get-LocalizedString -Key "Resource: '{0}' does not have WinRM service configured. Configure WinRM service on the Azure VM Resources. Refer for more details '{1}'" -ArgumentList $resourceName, "http://aka.ms/azuresetup" )
                }
                else
@@ -286,7 +274,7 @@ try
   $resources = Get-EnvironmentResources -EnvironmentName $environmentName -TaskContext $distributedTaskContext
   if ($resources.Count -eq 0)
   {
-      Write-Telemetry "PREREQ002"
+      Write-Telemetry $telemetryCodes["PREREQ_NoResources"]
       throw (Get-LocalizedString -Key "No machine exists under environment: '{0}' for deployment" -ArgumentList $environmentName)
   }
 
@@ -296,7 +284,7 @@ catch
 {
   if(!$global:telemetrySet)
   {
-    Write-Telemetry "PREDEP001"
+    Write-Telemetry $telemetryCodes["UNKNOWN_PreDeploymentError"]
   }
 
   throw
@@ -319,7 +307,7 @@ if($runPowershellInParallel -eq "false" -or  ( $resources.Count -eq 1 ) )
 
         if ($status -ne "Passed")
         {
-            Write-Telemetry "DEP001"
+            Write-Telemetry $telemetryCodes["DEPLOYMENT_Failed"]
             Write-Verbose $deploymentResponse.Error.ToString() -Verbose
             $errorMessage =  $deploymentResponse.Error.Message
             ThrowError -errorMessage $errorMessage
@@ -372,7 +360,7 @@ else
 
 if($envOperationStatus -ne "Passed")
 {
-    Write-Telemetry "DEP001"
+    Write-Telemetry $telemetryCodes["DEPLOYMENT_Failed"]
     $errorMessage = (Get-LocalizedString -Key 'Deployment on one or more machines failed.')
     ThrowError -errorMessage $errorMessage
 }
