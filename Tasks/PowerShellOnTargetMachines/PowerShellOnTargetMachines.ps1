@@ -99,7 +99,7 @@ function Get-ResourceWinRmConfig
 
         if([string]::IsNullOrWhiteSpace($winrmPortToUse))
         {
-            Write-Telemetry $telemetryCodes["PREREQ_NoWinRMHTTPSPort"]
+            Write-Telemetry "PREREQ_NoWinRMHTTPSPort"
             throw(Get-LocalizedString -Key "{0} port was not provided for resource '{1}'" -ArgumentList "WinRM HTTPS", $resourceName)
         }
     }
@@ -113,7 +113,7 @@ function Get-ResourceWinRmConfig
 
         if([string]::IsNullOrWhiteSpace($winrmPortToUse))
         {
-            Write-Telemetry $telemetryCodes["PREREQ_NoWinRMHTTP_Port"]
+            Write-Telemetry "PREREQ_NoWinRMHTTP_Port"
             throw(Get-LocalizedString -Key "{0} port was not provided for resource '{1}'" -ArgumentList "WinRM HTTP", $resourceName)
         }
     }
@@ -136,7 +136,7 @@ function Get-ResourceWinRmConfig
 
                if ([string]::IsNullOrEmpty($winrmHttpPort))
                {
-                   Write-Telemetry $telemetryCodes["PREREQ_NoWinRMHTTP_Port"]
+                   Write-Telemetry "PREREQ_NoWinRMHTTP_Port"
                    throw(Get-LocalizedString -Key "Resource: '{0}' does not have WinRM service configured. Configure WinRM service on the Azure VM Resources. Refer for more details '{1}'" -ArgumentList $resourceName, "http://aka.ms/azuresetup" )
                }
                else
@@ -171,7 +171,7 @@ function Get-ResourceWinRmConfig
 
                if ([string]::IsNullOrEmpty($winrmHttpsPort))
                {
-                   Write-Telemetry $telemetryCodes["PREREQ_NoWinRMHTTPSPort"]
+                   Write-Telemetry "PREREQ_NoWinRMHTTPSPort"
                    throw(Get-LocalizedString -Key "Resource: '{0}' does not have WinRM service configured. Configure WinRM service on the Azure VM Resources. Refer for more details '{1}'" -ArgumentList $resourceName, "http://aka.ms/azuresetup" )
                }
                else
@@ -274,7 +274,7 @@ try
   $resources = Get-EnvironmentResources -EnvironmentName $environmentName -TaskContext $distributedTaskContext
   if ($resources.Count -eq 0)
   {
-      Write-Telemetry $telemetryCodes["PREREQ_NoResources"]
+      Write-Telemetry "PREREQ_NoResources"
       throw (Get-LocalizedString -Key "No machine exists under environment: '{0}' for deployment" -ArgumentList $environmentName)
   }
 
@@ -284,7 +284,7 @@ catch
 {
   if(!$global:telemetrySet)
   {
-    Write-Telemetry $telemetryCodes["UNKNOWN_PreDeploymentError"]
+    Write-Telemetry "UNKNOWNPREDEP_Error"
   }
 
   throw
@@ -307,7 +307,7 @@ if($runPowershellInParallel -eq "false" -or  ( $resources.Count -eq 1 ) )
 
         if ($status -ne "Passed")
         {
-            Write-Telemetry $telemetryCodes["DEPLOYMENT_Failed"]
+            Write-Telemetry "DEPLOYMENT_Failed"
             Write-Verbose $deploymentResponse.Error.ToString() -Verbose
             $errorMessage =  $deploymentResponse.Error.Message
             ThrowError -errorMessage $errorMessage
@@ -360,7 +360,7 @@ else
 
 if($envOperationStatus -ne "Passed")
 {
-    Write-Telemetry $telemetryCodes["DEPLOYMENT_Failed"]
+    Write-Telemetry "DEPLOYMENT_Failed"
     $errorMessage = (Get-LocalizedString -Key 'Deployment on one or more machines failed.')
     ThrowError -errorMessage $errorMessage
 }

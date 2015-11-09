@@ -4,7 +4,7 @@ $telemetryCodes =
   "PREREQ_NoWinRMHTTPSPort" = "PREREQ002";
   "PREREQ_NoResources" = "PREREQ003";
 
-  "UNKNOWN_PreDeploymentError" = "UNKNOWNPREDEP001";
+  "UNKNOWNPREDEP_Error" = "UNKNOWNPREDEP001";
 
   "DEPLOYMENT_Failed" = "DEP001"
  }
@@ -15,9 +15,10 @@ function Write-Telemetry
   [CmdletBinding()]
   param(
     [Parameter(Mandatory=$True,Position=1)]
-    [string]$code
+    [string]$codeKey
     )
 
+  $code = $telemetryCodes[$codeKey]
   $telemetryString = "##vso[task.logissue type=error;code=" + $code + ";TaskId=3B5693D4-5777-4FEE-862A-BD2B7A374C68;]"
   Write-Host $telemetryString
   $global:telemetrySet = $true
